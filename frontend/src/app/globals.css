@@ -1,0 +1,512 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────
+   Design Tokens — Royal Indian Theme
+────────────────────────────────────────────── */
+:root {
+  --gold: #D4AF37;
+  --gold-light: #F5D060;
+  --gold-dark: #9A7D20;
+  --crimson: #8B0000;
+  --crimson-light: #C0392B;
+  --navy: #0D1B2A;
+  --navy-mid: #152336;
+  --navy-light: #1E3A5F;
+  --felt: #1B4332;
+  --felt-light: #245741;
+  --ivory: #F5F0E8;
+  --ivory-dark: #E8DFC8;
+  --card-bg: #FEFEFE;
+  --card-shadow: rgba(0, 0, 0, 0.4);
+  --red-suit: #C0392B;
+  --black-suit: #1A1A1A;
+
+  --font-display: 'Cinzel', 'Georgia', serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+/* ──────────────────────────────────────────────
+   Base Reset
+────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--navy);
+  color: var(--ivory);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ──────────────────────────────────────────────
+   Scrollbar
+────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+
+/* ──────────────────────────────────────────────
+   Typography
+────────────────────────────────────────────── */
+h1, h2, h3 { font-family: var(--font-display); }
+
+.text-gold { color: var(--gold); }
+.text-crimson { color: var(--crimson-light); }
+.text-ivory { color: var(--ivory); }
+
+/* ──────────────────────────────────────────────
+   Gold Divider
+────────────────────────────────────────────── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  border: none;
+}
+
+/* ──────────────────────────────────────────────
+   Buttons
+────────────────────────────────────────────── */
+.btn-royal {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 0.6rem 1.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  color: var(--navy);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+.btn-royal:hover {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.5);
+  transform: translateY(-1px);
+}
+.btn-royal:active { transform: translateY(0); }
+.btn-royal:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 0.6rem 1.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+.btn-ghost:hover {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.btn-danger {
+  font-family: var(--font-display);
+  padding: 0.6rem 1.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--crimson-light);
+  background: linear-gradient(135deg, var(--crimson), var(--crimson-light));
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.btn-danger:hover { opacity: 0.85; transform: translateY(-1px); }
+
+/* ──────────────────────────────────────────────
+   Cards (Playing Cards)
+────────────────────────────────────────────── */
+.playing-card {
+  width: 72px;
+  height: 104px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 2px 3px 8px var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  flex-shrink: 0;
+}
+.playing-card:hover { transform: translateY(-12px); box-shadow: 2px 12px 24px var(--card-shadow); }
+.playing-card.playable { cursor: pointer; }
+.playing-card.playable:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.7), 2px 12px 24px var(--card-shadow); }
+.playing-card.not-playable { cursor: default; opacity: 0.75; }
+.playing-card.not-playable:hover { transform: none; box-shadow: 2px 3px 8px var(--card-shadow); }
+.playing-card.selected { transform: translateY(-20px); box-shadow: 0 0 28px rgba(212, 175, 55, 0.9); }
+.playing-card.face-down {
+  background: linear-gradient(135deg, var(--navy-mid), var(--navy-light));
+  border: 2px solid var(--gold-dark);
+  cursor: default;
+}
+.playing-card.face-down:hover { transform: none; box-shadow: 2px 3px 8px var(--card-shadow); }
+
+.card-corner {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: var(--font-display);
+}
+.card-corner-tl { top: 5px; left: 6px; }
+.card-corner-br { bottom: 5px; right: 6px; transform: rotate(180deg); }
+
+.card-center-suit {
+  font-size: 28px;
+  line-height: 1;
+}
+.suit-red { color: var(--red-suit); }
+.suit-black { color: var(--black-suit); }
+
+/* Card back pattern */
+.card-back-pattern {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(212,175,55,0.1) 0, rgba(212,175,55,0.1) 1px, transparent 0, transparent 50%);
+  background-size: 8px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+/* ──────────────────────────────────────────────
+   Hand (Fan Layout)
+────────────────────────────────────────────── */
+.hand-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: -8px;
+  padding: 8px 16px;
+}
+.hand-container .playing-card {
+  margin: 0 -6px;
+}
+
+/* ──────────────────────────────────────────────
+   Game Table (Felt)
+────────────────────────────────────────────── */
+.game-table {
+  background: radial-gradient(ellipse at center, var(--felt-light) 0%, var(--felt) 60%, #0f2c1e 100%);
+  border: 3px solid var(--gold-dark);
+  border-radius: 50%;
+  position: relative;
+  box-shadow:
+    inset 0 0 60px rgba(0,0,0,0.5),
+    0 0 40px rgba(0,0,0,0.7);
+}
+
+/* ──────────────────────────────────────────────
+   Panel / Glass Card
+────────────────────────────────────────────── */
+.panel {
+  background: rgba(13, 27, 42, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.panel-gold {
+  background: rgba(13, 27, 42, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+}
+
+/* ──────────────────────────────────────────────
+   Suit Icons
+────────────────────────────────────────────── */
+.suit-spades::before { content: '♠'; }
+.suit-hearts::before { content: '♥'; }
+.suit-diamonds::before { content: '♦'; }
+.suit-clubs::before { content: '♣'; }
+
+/* ──────────────────────────────────────────────
+   Animations
+────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(212, 175, 55, 0.3); }
+  50%       { box-shadow: 0 0 24px rgba(212, 175, 55, 0.8); }
+}
+@keyframes cardDeal {
+  from { opacity: 0; transform: translateY(-60px) scale(0.8); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes trickWin {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position: 400px 0; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.animate-fadeInUp { animation: fadeInUp 0.5s ease both; }
+.animate-fadeIn   { animation: fadeIn 0.3s ease both; }
+.animate-slideInLeft { animation: slideInLeft 0.4s ease both; }
+.animate-goldPulse   { animation: goldPulse 2s ease-in-out infinite; }
+.animate-cardDeal    { animation: cardDeal 0.4s ease both; }
+.animate-trickWin    { animation: trickWin 0.5s ease; }
+.animate-bounceIn    { animation: bounceIn 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-spin        { animation: spin 1s linear infinite; }
+
+/* Staggered deal delays */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* ──────────────────────────────────────────────
+   Input Fields
+────────────────────────────────────────────── */
+.input-royal {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  color: var(--ivory);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-royal::placeholder { color: rgba(245, 240, 232, 0.35); }
+.input-royal:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+}
+
+/* ──────────────────────────────────────────────
+   Ornamental Border
+────────────────────────────────────────────── */
+.ornament-border {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--navy-mid), var(--navy-mid)) padding-box,
+    linear-gradient(135deg, var(--gold), var(--gold-dark), var(--gold)) border-box;
+  border-radius: 16px;
+}
+
+/* ──────────────────────────────────────────────
+   Trump Badge
+────────────────────────────────────────────── */
+.trump-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+
+/* ──────────────────────────────────────────────
+   Player Seat
+────────────────────────────────────────────── */
+.player-seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.player-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-dark);
+  object-fit: cover;
+  background: var(--navy-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--gold);
+}
+.player-seat.active-turn .player-avatar {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.7);
+  animation: goldPulse 1.5s ease-in-out infinite;
+}
+
+/* ──────────────────────────────────────────────
+   Score / Kot dots
+────────────────────────────────────────────── */
+.kot-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+}
+.kot-dot.filled { background: var(--gold); }
+
+/* ──────────────────────────────────────────────
+   Modal Overlay
+────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ──────────────────────────────────────────────
+   Trick pile in center
+────────────────────────────────────────────── */
+.trick-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+/* ──────────────────────────────────────────────
+   Notifications / Toast
+────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13, 27, 42, 0.95);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 12px 24px;
+  color: var(--ivory);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  z-index: 100;
+  animation: fadeInUp 0.3s ease;
+}
+.toast.error { border-color: var(--crimson-light); color: var(--crimson-light); }
+.toast.success { border-color: #27ae60; color: #2ecc71; }
+
+/* ──────────────────────────────────────────────
+   Lobby / Room Cards
+────────────────────────────────────────────── */
+.room-card {
+  background: rgba(21, 35, 54, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.room-card:hover {
+  border-color: var(--gold);
+  background: rgba(30, 58, 95, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
+}
+
+/* ──────────────────────────────────────────────
+   Chat
+────────────────────────────────────────────── */
+.chat-bubble {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  max-width: 80%;
+  line-height: 1.4;
+}
+.chat-bubble.mine {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  align-self: flex-end;
+  color: var(--ivory);
+}
+.chat-bubble.theirs {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  align-self: flex-start;
+  color: rgba(245, 240, 232, 0.85);
+}
+.chat-bubble.system {
+  background: transparent;
+  color: var(--gold);
+  font-size: 0.75rem;
+  text-align: center;
+  align-self: center;
+  border: none;
+  font-style: italic;
+}
+
+/* ──────────────────────────────────────────────
+   Loading Spinner
+────────────────────────────────────────────── */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(212, 175, 55, 0.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ──────────────────────────────────────────────
+   Responsive
+────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .playing-card { width: 56px; height: 82px; }
+  .card-center-suit { font-size: 22px; }
+  .card-corner { font-size: 9px; }
+}
