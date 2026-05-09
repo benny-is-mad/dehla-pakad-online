@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 type Tab = 'login' | 'register';
 
-export default function LoginPage() {
+function LoginContent() {
   const { login, register, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -256,5 +256,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1B2A4A', color: '#D4AF37' }}>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
