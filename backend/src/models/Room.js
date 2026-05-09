@@ -34,7 +34,7 @@ const roomSchema = new mongoose.Schema(
     trumpMode: {
       type: String,
       enum: ['dynamic', 'manual'],
-      default: 'dynamic',
+      default: 'manual',
     },
     status: {
       type: String,

@@ -236,8 +236,11 @@ export default function GamePage() {
   const myHand = gameState?.hands?.[myPosition] ?? [];
   const getPlayer = (pos: number) => players.find((p) => p.position === pos) ?? null;
 
-  // Reorder: local player always bottom (South=0), displayed as [West=1, North=2, East=3, South=0]
-  const otherPositions = [1, 2, 3].filter((p) => p !== myPosition);
+  // Relative positions based on myPosition
+  const bottomPos = myPosition;
+  const leftPos = (myPosition + 1) % 4;
+  const topPos = (myPosition + 2) % 4;
+  const rightPos = (myPosition + 3) % 4;
 
   // ─── Render ───────────────────────────────────────────────────────────────
   if (!gameState) {
@@ -352,35 +355,35 @@ export default function GamePage() {
             justifyItems: 'center',
           }}
         >
-          {/* Top: North player (pos 2) */}
+          {/* Top player */}
           <div style={{ gridColumn: '1/4', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <PlayerSeat
-              position={2}
-              player={getPlayer(2)}
-              cardCount={(gameState.hands[2] || []).length}
-              isCurrentTurn={getCurrentPlayer(gameState) === 2}
-              isMe={myPosition === 2}
-              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === 2)?.card || null}
-              team={2 % 2}
+              position={topPos}
+              player={getPlayer(topPos)}
+              cardCount={(gameState.hands[topPos] || []).length}
+              isCurrentTurn={getCurrentPlayer(gameState) === topPos}
+              isMe={false}
+              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === topPos)?.card || null}
+              team={topPos % 2}
             />
-            {/* North's hand (face down) */}
+            {/* Top's hand (face down) */}
             <div style={{ display: 'flex', gap: -4 }}>
-              {(gameState.hands[2] || []).slice(0, 8).map((card, i) => (
+              {(gameState.hands[topPos] || []).slice(0, 8).map((card, i) => (
                 <Card key={i} card={{ hidden: true, suit: '', rank: '' }} style={{ width: 28, height: 40, margin: '0 -6px', borderRadius: 4 }} />
               ))}
             </div>
           </div>
 
-          {/* Left: West player (pos 1) */}
+          {/* Left player */}
           <div style={{ gridRow: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <PlayerSeat
-              position={1}
-              player={getPlayer(1)}
-              cardCount={(gameState.hands[1] || []).length}
-              isCurrentTurn={getCurrentPlayer(gameState) === 1}
-              isMe={myPosition === 1}
-              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === 1)?.card || null}
-              team={1 % 2}
+              position={leftPos}
+              player={getPlayer(leftPos)}
+              cardCount={(gameState.hands[leftPos] || []).length}
+              isCurrentTurn={getCurrentPlayer(gameState) === leftPos}
+              isMe={false}
+              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === leftPos)?.card || null}
+              team={leftPos % 2}
             />
           </div>
 
@@ -406,34 +409,34 @@ export default function GamePage() {
                 padding: 12,
               }}
             >
-              {/* North card */}
+              {/* Top card */}
               <div style={{ gridArea: 'north', display: 'flex', justifyContent: 'center' }}>
-                {gameState.currentTrick.cards.find((c) => c.position === 2) ? (
-                  <Card card={gameState.currentTrick.cards.find((c) => c.position === 2)!.card} small />
+                {gameState.currentTrick.cards.find((c) => c.position === topPos) ? (
+                  <Card card={gameState.currentTrick.cards.find((c) => c.position === topPos)!.card} small />
                 ) : (
                   <div style={{ width: 52, height: 76, borderRadius: 6, border: '1px dashed rgba(212,175,55,0.15)' }} />
                 )}
               </div>
-              {/* West card */}
+              {/* Left card */}
               <div style={{ gridArea: 'west', display: 'flex', justifyContent: 'flex-end' }}>
-                {gameState.currentTrick.cards.find((c) => c.position === 1) ? (
-                  <Card card={gameState.currentTrick.cards.find((c) => c.position === 1)!.card} small />
+                {gameState.currentTrick.cards.find((c) => c.position === leftPos) ? (
+                  <Card card={gameState.currentTrick.cards.find((c) => c.position === leftPos)!.card} small />
                 ) : (
                   <div style={{ width: 52, height: 76, borderRadius: 6, border: '1px dashed rgba(212,175,55,0.15)' }} />
                 )}
               </div>
-              {/* East card */}
+              {/* Right card */}
               <div style={{ gridArea: 'east', display: 'flex', justifyContent: 'flex-start' }}>
-                {gameState.currentTrick.cards.find((c) => c.position === 3) ? (
-                  <Card card={gameState.currentTrick.cards.find((c) => c.position === 3)!.card} small />
+                {gameState.currentTrick.cards.find((c) => c.position === rightPos) ? (
+                  <Card card={gameState.currentTrick.cards.find((c) => c.position === rightPos)!.card} small />
                 ) : (
                   <div style={{ width: 52, height: 76, borderRadius: 6, border: '1px dashed rgba(212,175,55,0.15)' }} />
                 )}
               </div>
-              {/* South card */}
+              {/* Bottom card */}
               <div style={{ gridArea: 'south', display: 'flex', justifyContent: 'center' }}>
-                {gameState.currentTrick.cards.find((c) => c.position === 0) ? (
-                  <Card card={gameState.currentTrick.cards.find((c) => c.position === 0)!.card} small />
+                {gameState.currentTrick.cards.find((c) => c.position === bottomPos) ? (
+                  <Card card={gameState.currentTrick.cards.find((c) => c.position === bottomPos)!.card} small />
                 ) : (
                   <div style={{ width: 52, height: 76, borderRadius: 6, border: '1px dashed rgba(212,175,55,0.15)' }} />
                 )}
@@ -455,36 +458,36 @@ export default function GamePage() {
             </div>
           </div>
 
-          {/* Right: East player (pos 3) */}
+          {/* Right player */}
           <div style={{ gridRow: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <PlayerSeat
-              position={3}
-              player={getPlayer(3)}
-              cardCount={(gameState.hands[3] || []).length}
-              isCurrentTurn={getCurrentPlayer(gameState) === 3}
-              isMe={myPosition === 3}
-              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === 3)?.card || null}
-              team={3 % 2}
+              position={rightPos}
+              player={getPlayer(rightPos)}
+              cardCount={(gameState.hands[rightPos] || []).length}
+              isCurrentTurn={getCurrentPlayer(gameState) === rightPos}
+              isMe={false}
+              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === rightPos)?.card || null}
+              team={rightPos % 2}
             />
           </div>
 
-          {/* Bottom: South player (pos 0) = ME */}
+          {/* Bottom player = ME */}
           <div style={{ gridColumn: '1/4', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <PlayerSeat
-              position={0}
-              player={getPlayer(0)}
+              position={bottomPos}
+              player={getPlayer(bottomPos)}
               cardCount={myHand.length}
               isCurrentTurn={isMyTurn}
-              isMe={myPosition === 0}
-              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === 0)?.card || null}
-              team={0 % 2}
+              isMe={true}
+              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === bottomPos)?.card || null}
+              team={bottomPos % 2}
             />
 
             {/* My hand */}
             <Hand
               cards={myHand}
-              isMyHand={myPosition === 0}
-              currentTurn={isMyTurn && myPosition === 0}
+              isMyHand={true}
+              currentTurn={isMyTurn}
               onPlayCard={handlePlayCard}
               leadSuit={gameState.currentTrick.leadSuit}
               phase={gameState.phase}
@@ -492,42 +495,6 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* My hand if not position 0 */}
-        {myPosition !== 0 && (
-          <div
-            style={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 8,
-              padding: '0.75rem',
-              background: 'linear-gradient(to top, rgba(6,14,24,0.95) 60%, transparent)',
-              zIndex: 10,
-            }}
-          >
-            <PlayerSeat
-              position={myPosition}
-              player={getPlayer(myPosition)}
-              cardCount={myHand.length}
-              isCurrentTurn={isMyTurn}
-              isMe
-              lastPlayedCard={gameState.currentTrick.cards.find((c) => c.position === myPosition)?.card || null}
-              team={myPosition % 2}
-            />
-            <Hand
-              cards={myHand}
-              isMyHand
-              currentTurn={isMyTurn}
-              onPlayCard={handlePlayCard}
-              leadSuit={gameState.currentTrick.leadSuit}
-              phase={gameState.phase}
-            />
-          </div>
-        )}
 
         {/* Sidebar panels */}
         {showScore && (

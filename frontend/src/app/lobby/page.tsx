@@ -45,7 +45,7 @@ export default function LobbyPage() {
 
   // Create room form
   const [createMode, setCreateMode] = useState<'casual' | 'ranked' | 'private'>('casual');
-  const [trumpMode, setTrumpMode] = useState<'dynamic' | 'manual'>('dynamic');
+  const [trumpMode, setTrumpMode] = useState<'dynamic' | 'manual'>('manual');
   const [creating, setCreating] = useState(false);
 
   // Join by code

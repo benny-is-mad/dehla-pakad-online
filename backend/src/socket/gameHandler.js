@@ -38,7 +38,7 @@ function broadcastGameState(io, code, state, room) {
 }
 
 // Schedule bot moves with delay for realism
-async function scheduleBotMove(io, code, activeGames, delay = 1200) {
+async function scheduleBotMove(io, code, activeGames, delay = 5000) {
   const game = activeGames.get(code);
   if (!game) return;
 
