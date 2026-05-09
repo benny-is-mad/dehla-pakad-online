@@ -11,6 +11,7 @@ interface Room {
   host: string;
   mode: 'casual' | 'ranked' | 'private';
   trumpMode: 'dynamic' | 'manual';
+  collectionMode: 'pakad' | 'instant';
   status: 'waiting' | 'playing' | 'finished';
   players: Array<{
     username: string;
@@ -46,6 +47,7 @@ export default function LobbyPage() {
   // Create room form
   const [createMode, setCreateMode] = useState<'casual' | 'ranked' | 'private'>('casual');
   const [trumpMode, setTrumpMode] = useState<'dynamic' | 'manual'>('manual');
+  const [collectionMode, setCollectionMode] = useState<'pakad' | 'instant'>('pakad');
   const [creating, setCreating] = useState(false);
 
   // Join by code
@@ -79,6 +81,7 @@ export default function LobbyPage() {
       const { room } = await api.post<{ room: Room }>('/api/rooms/create', {
         mode: createMode,
         trumpMode,
+        collectionMode,
       });
       router.push(`/room/${room.code}`);
     } catch (err: unknown) {
@@ -256,6 +259,34 @@ export default function LobbyPage() {
                   </div>
                 </div>
 
+                {/* Collection Mode */}
+                <div>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--gold)', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>
+                    COLLECTION MODE
+                  </label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {(['pakad', 'instant'] as const).map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setCollectionMode(c)}
+                        style={{
+                          flex: 1,
+                          padding: '0.4rem',
+                          borderRadius: 6,
+                          border: `1px solid ${collectionMode === c ? 'rgba(212,175,55,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                          background: collectionMode === c ? 'rgba(212,175,55,0.15)' : 'transparent',
+                          color: collectionMode === c ? 'var(--gold)' : 'rgba(245,240,232,0.4)',
+                          cursor: 'pointer',
+                          fontSize: '0.72rem',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {c.charAt(0).toUpperCase() + c.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   id="create-room-btn"
                   className="btn-royal"
@@ -411,7 +442,7 @@ export default function LobbyPage() {
                             color: 'rgba(245,240,232,0.6)',
                           }}
                         >
-                          {room.trumpMode}
+                          {room.trumpMode} | {room.collectionMode || 'pakad'}
                         </span>
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'rgba(245,240,232,0.5)' }}>

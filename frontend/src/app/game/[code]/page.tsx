@@ -321,7 +321,7 @@ export default function GamePage() {
             onClick={() => setShowScore((s) => !s)}
             style={{ fontSize: '0.7rem', padding: '0.3rem 0.65rem' }}
           >
-            📊 Score
+            📊 Detailed Score
           </button>
           <button
             className="btn-ghost"
@@ -340,6 +340,18 @@ export default function GamePage() {
         </div>
       </header>
 
+      {/* Persistent 10s Score HUD */}
+      <div style={{
+        display: 'flex', justifyContent: 'center', gap: 24, padding: '8px 16px',
+        background: 'linear-gradient(90deg, transparent, rgba(6,14,24,0.8), transparent)',
+        borderBottom: '1px solid rgba(212,175,55,0.1)',
+        fontFamily: 'var(--font-display)', fontSize: '0.8rem', color: 'rgba(245,240,232,0.8)',
+        zIndex: 9
+      }}>
+        <div><span style={{ color: 'var(--gold)' }}>🏆 Your Team:</span> {gameState.tensWon[(myPosition % 2) as 0 | 1]?.length || 0} Dehle</div>
+        <div><span style={{ color: '#E63946' }}>🛑 Opponents:</span> {gameState.tensWon[((myPosition + 1) % 2) as 0 | 1]?.length || 0} Dehle</div>
+      </div>
+
       {/* Main game area */}
       <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
         {/* Game Table */}
@@ -352,7 +364,6 @@ export default function GamePage() {
             gap: '0.5rem',
             padding: '0.75rem',
             alignItems: 'center',
-            justifyItems: 'center',
           }}
         >
           {/* Top player */}
@@ -375,7 +386,7 @@ export default function GamePage() {
           </div>
 
           {/* Left player */}
-          <div style={{ gridRow: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <div style={{ gridRow: 2, gridColumn: 1, justifySelf: 'start', marginLeft: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <PlayerSeat
               position={leftPos}
               player={getPlayer(leftPos)}
@@ -391,6 +402,9 @@ export default function GamePage() {
           <div
             className="game-table"
             style={{
+              gridRow: 2,
+              gridColumn: 2,
+              justifySelf: 'center',
               width: 280,
               height: 280,
               display: 'flex',
@@ -459,7 +473,7 @@ export default function GamePage() {
           </div>
 
           {/* Right player */}
-          <div style={{ gridRow: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <div style={{ gridRow: 2, gridColumn: 3, justifySelf: 'end', marginRight: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <PlayerSeat
               position={rightPos}
               player={getPlayer(rightPos)}

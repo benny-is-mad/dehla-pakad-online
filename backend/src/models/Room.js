@@ -36,6 +36,11 @@ const roomSchema = new mongoose.Schema(
       enum: ['dynamic', 'manual'],
       default: 'manual',
     },
+    collectionMode: {
+      type: String,
+      enum: ['pakad', 'instant'],
+      default: 'pakad',
+    },
     status: {
       type: String,
       enum: ['waiting', 'playing', 'finished'],

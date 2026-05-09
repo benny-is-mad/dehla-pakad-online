@@ -12,7 +12,8 @@ const {
   playCard,
   getCurrentPlayer,
   getPublicState,
-  nextDealer,
+  nextDealerAndCaller,
+  clearTrick,
   getTeam,
 } = require('../game/DehlaEngine');
 const { getBotMove, botDeclareTrump } = require('../game/BotPlayer');
@@ -47,6 +48,7 @@ async function scheduleBotMove(io, code, activeGames, delay = 5000) {
   const currentPlayer = room.players.find(p => p.position === currentPos);
 
   if (!currentPlayer?.isBot) return;
+  if (state.trickReadyToClear) return; // Wait for trick clear timeout
 
   setTimeout(async () => {
     const game = activeGames.get(code);
@@ -86,10 +88,25 @@ async function scheduleBotMove(io, code, activeGames, delay = 5000) {
 
     broadcastGameState(io, code, result.state, room);
 
-    // Handle hand complete
-    const handCompleteEvent = result.events.find(e => e.type === 'hand_complete');
-    if (handCompleteEvent) {
-      await handleHandComplete(io, code, activeGames, handCompleteEvent);
+    // Handle delayed trick clear
+    if (result.state.trickReadyToClear) {
+      setTimeout(async () => {
+        const gameNow = activeGames.get(code);
+        if (!gameNow) return;
+        
+        const clearResult = clearTrick(gameNow.state);
+        activeGames.set(code, { state: gameNow.state, room });
+        
+        broadcastGameState(io, code, gameNow.state, room);
+        
+        const handCompleteEvent = clearResult.events.find(e => e.type === 'hand_complete');
+        if (handCompleteEvent) {
+          await handleHandComplete(io, code, activeGames, handCompleteEvent);
+          return;
+        }
+        
+        scheduleBotMove(io, code, activeGames);
+      }, 2500); // 2.5s delay for visibility
       return;
     }
 
@@ -118,15 +135,15 @@ async function handleHandComplete(io, code, activeGames, handResult) {
     if (!game) return;
     const { state: s, room: r } = game;
 
-    const newDealer = nextDealer(s);
-    const newState = createHandState(newDealer, s.trumpMode, s);
+    const { dealer: newDealer, caller: newCaller } = nextDealerAndCaller(s);
+    const newState = createHandState(newDealer, s.trumpMode, s.collectionMode, s);
     activeGames.set(code, { state: newState, room: r });
 
     io.to(code).emit('new-hand', { dealer: newDealer, handNumber: newState.handNumber });
     broadcastGameState(io, code, newState, r);
 
     if (newState.phase === 'trump_selection') {
-      const trumpPos = require('../game/DehlaEngine').acwNext(newDealer);
+      const trumpPos = newCaller; // The caller is determined by nextDealerAndCaller
       const player = r.players.find(p => p.position === trumpPos);
       if (player?.isBot) {
         scheduleBotMove(io, code, activeGames);
@@ -218,7 +235,7 @@ module.exports = function registerGameHandlers(io, socket, activeGames) {
 
       // Initial dealer: position 0 (can randomize)
       const dealer = Math.floor(Math.random() * 4);
-      const state = createHandState(dealer, room.trumpMode);
+      const state = createHandState(dealer, room.trumpMode, room.collectionMode || 'pakad');
       state.startedAt = new Date();
 
       room.status = 'playing';
@@ -276,6 +293,27 @@ module.exports = function registerGameHandlers(io, socket, activeGames) {
       const handCompleteEvent = result.events.find(e => e.type === 'hand_complete');
       if (handCompleteEvent) {
         await handleHandComplete(io, code, activeGames, handCompleteEvent);
+        return;
+      }
+
+      if (result.state.trickReadyToClear) {
+        setTimeout(async () => {
+          const gameNow = activeGames.get(code);
+          if (!gameNow) return;
+          
+          const clearResult = clearTrick(gameNow.state);
+          activeGames.set(code, { state: gameNow.state, room });
+          
+          broadcastGameState(io, code, gameNow.state, room);
+          
+          const handCompleteEvent = clearResult.events.find(e => e.type === 'hand_complete');
+          if (handCompleteEvent) {
+            await handleHandComplete(io, code, activeGames, handCompleteEvent);
+            return;
+          }
+          
+          scheduleBotMove(io, code, activeGames);
+        }, 2500); // 2.5s delay
         return;
       }
 

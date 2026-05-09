@@ -61,13 +61,7 @@ function isTen(card) {
 
 // ─── State Factory ────────────────────────────────────────────────────────────
 
-/**
- * Creates a fresh game state for a new hand.
- * @param {number} dealer - position of dealer (0-3)
- * @param {string} trumpMode - 'dynamic' | 'manual'
- * @param {object} prevState - previous hand state (for kot tracking), or null
- */
-function createHandState(dealer, trumpMode, prevState = null) {
+function createHandState(dealer, trumpMode, collectionMode = 'pakad', prevState = null) {
   const deck = shuffleDeck(createDeck());
 
   // Deal 5 cards anti-clockwise starting from player to RIGHT of dealer
@@ -93,6 +87,7 @@ function createHandState(dealer, trumpMode, prevState = null) {
     //   'hand_complete'    — hand finished, calculate scores
 
     trumpMode,
+    collectionMode,
     trumpSuit: null, // set when determined
     trumpDeclaredByPosition: null,
 
@@ -104,6 +99,7 @@ function createHandState(dealer, trumpMode, prevState = null) {
       leadSuit: null,
       cards: [],         // [{position, card}] in play order
     },
+    trickReadyToClear: false, // Flag for delayed trick clearing
 
     hands,               // cards in each player's hand (server only)
     remainingDeck: deck, // cards not yet dealt (deal 8 more per player after trump)
@@ -129,6 +125,12 @@ function createHandState(dealer, trumpMode, prevState = null) {
       : { 0: 0, 1: 0 },
 
     handNumber: prevState ? prevState.handNumber + 1 : 1,
+    
+    // Track who called trump for each team to alternate
+    lastCallerByTeam: prevState 
+      ? { ...prevState.lastCallerByTeam } 
+      : { 0: null, 1: null },
+    lastHandWinner: prevState ? prevState.handWinner : null,
 
     // Per-hand scores
     tensWon: { 0: [], 1: [] }, // ten cards collected per team
@@ -177,6 +179,9 @@ function declareTrump(state, position, suit) {
 
   state.trumpSuit = suit;
   state.trumpDeclaredByPosition = position;
+  const team = getTeam(position);
+  state.lastCallerByTeam[team] = position; // Track caller
+  
   state.phase = 'playing_phase2';
   state.currentTrick.leadPosition = position; // trump maker leads
   dealRemainingCards(state);
@@ -279,47 +284,73 @@ function playCard(state, position, card) {
     const pileEvent = updateCenterPile(state, trickResult.winner);
     if (pileEvent) events.push(pileEvent);
 
-    // After phase 1 (5 tricks), deal remaining cards
-    if (state.phase === 'playing_phase1' && state.tricks.length === 5) {
-      // If no trump yet after 5 tricks, pick randomly from phase1 cards
-      if (state.trumpSuit === null) {
-        const allPhase1Cards = state.phase1Tricks.flatMap(t => t.cards.map(c => c.card));
-        const randomCard = allPhase1Cards[Math.floor(Math.random() * allPhase1Cards.length)];
-        state.trumpSuit = randomCard.suit;
-        events.push({ type: 'trump_set_random', suit: state.trumpSuit });
-      }
-      state.phase = 'playing_phase2';
-      dealRemainingCards(state);
-      events.push({ type: 'phase2_started', remainingCards: 8 });
-    }
-
-    // Check hand complete (13 tricks)
-    if (state.tricks.length === 13) {
-      // Last trick winner collects center pile
-      if (state.centerPile.length > 0) {
-        const lastWinner = trickResult.winner;
-        const team = getTeam(lastWinner);
-        state.teamPiles[team].push(...state.centerPile);
-        state.centerPile = [];
-        state.centerPileTrickCount = 0;
-        events.push({ type: 'last_trick_collect', team, winner: lastWinner });
-      }
-
-      const handResult = resolveHand(state);
-      events.push({ type: 'hand_complete', ...handResult });
-      state.phase = 'hand_complete';
-    } else {
-      // Next trick lead = winner of this trick
-      state.currentTrick = {
-        number: state.currentTrick.number + 1,
-        leadPosition: trickResult.winner,
-        leadSuit: null,
-        cards: [],
-      };
-    }
+    // Flag that trick is ready to clear, actual clearing is delayed
+    state.trickReadyToClear = true;
+    state.lastTrickResult = trickResult;
   }
 
   return { success: true, state, events };
+}
+
+// ─── Trick Clearing (Delayed) ──────────────────────────────────────────────────
+
+/**
+ * Called by handler after a delay to clear the table and start next trick/hand.
+ */
+function clearTrick(state) {
+  if (!state.trickReadyToClear) return { events: [] };
+  state.trickReadyToClear = false;
+
+  const events = [];
+  const trickResult = state.lastTrickResult;
+
+  // After phase 1 (5 tricks), deal remaining cards
+  if (state.phase === 'playing_phase1' && state.tricks.length === 5) {
+    if (state.trumpSuit === null) {
+      const allPhase1Cards = state.phase1Tricks.flatMap(t => t.cards.map(c => c.card));
+      const randomCard = allPhase1Cards[Math.floor(Math.random() * allPhase1Cards.length)];
+      state.trumpSuit = randomCard.suit;
+      const team = getTeam(trickResult.winner);
+      state.lastCallerByTeam[team] = trickResult.winner;
+      events.push({ type: 'trump_set_random', suit: state.trumpSuit });
+    }
+    state.phase = 'playing_phase2';
+    dealRemainingCards(state);
+    events.push({ type: 'phase2_started', remainingCards: 8 });
+  }
+
+  // Check hand complete (13 tricks)
+  if (state.tricks.length === 13) {
+    if (state.centerPile.length > 0) {
+      const lastWinner = trickResult.winner;
+      const team = getTeam(lastWinner);
+      
+      const tens = state.centerPile.filter(isTen);
+      tens.forEach(ten => {
+        if (!state.tensWon[team].some(t => t.suit === ten.suit)) {
+          state.tensWon[team].push(ten);
+        }
+      });
+      
+      state.teamPiles[team].push(...state.centerPile);
+      state.centerPile = [];
+      state.centerPileTrickCount = 0;
+      events.push({ type: 'last_trick_collect', team, winner: lastWinner, tens });
+    }
+
+    const handResult = resolveHand(state);
+    events.push({ type: 'hand_complete', ...handResult });
+    state.phase = 'hand_complete';
+  } else {
+    state.currentTrick = {
+      number: state.currentTrick.number + 1,
+      leadPosition: trickResult.winner,
+      leadSuit: null,
+      cards: [],
+    };
+  }
+
+  return { events };
 }
 
 // ─── Trick Resolution ─────────────────────────────────────────────────────────
@@ -395,8 +426,12 @@ function updateCenterPile(state, winnerPosition) {
 
   let event = null;
 
-  if (state.lastTrickWinner === winnerPosition) {
-    // Same individual player won consecutively → collect!
+  const isInstant = state.collectionMode === 'instant';
+  const isTeamConsecutive = !isInstant && state.lastTrickWinner !== null && getTeam(state.lastTrickWinner) === getTeam(winnerPosition);
+
+  if (isInstant || isTeamConsecutive) {
+    // Instant mode: winner collects immediately.
+    // Pakad mode: Team won consecutively → collect!
     const team = getTeam(winnerPosition);
     const collected = [...state.centerPile];
 
@@ -454,9 +489,21 @@ function resolveHand(state) {
     handWinner = 1;
     reason = 'more_tens';
   } else {
-    // Tie in tens: dealer's team loses (convention)
-    handWinner = getTeam(state.dealer) === 0 ? 1 : 0;
-    reason = 'tens_tie_dealer_loses';
+    // Tie in tens (2-2)
+    if (state.collectionMode === 'instant') {
+      // Instant mode tie breaker: Previous hand winner wins. If first hand, dealer's team loses.
+      if (state.lastHandWinner !== null) {
+        handWinner = state.lastHandWinner;
+        reason = 'tens_tie_previous_winner_wins';
+      } else {
+        handWinner = getTeam(state.dealer) === 0 ? 1 : 0;
+        reason = 'tens_tie_dealer_loses';
+      }
+    } else {
+      // Pakad mode tie breaker: Dealer's team loses
+      handWinner = getTeam(state.dealer) === 0 ? 1 : 0;
+      reason = 'tens_tie_dealer_loses';
+    }
   }
 
   // Kot check: all 4 tens → 1 Kot immediately
@@ -525,13 +572,26 @@ function getPublicState(state, forPosition) {
 // ─── Dealer Rotation ──────────────────────────────────────────────────────────
 
 /**
- * Returns next dealer position.
- * Dealer rotates anti-clockwise after each hand.
- * If a team wins by all-4-tens (Kot), dealer stays the same? 
- * Standard rule: dealer rotates anti-clockwise always.
+ * Returns next dealer and caller based on winning team.
+ * The winning team alternates their caller. The opposing team's person to the right of caller becomes dealer.
  */
-function nextDealer(state) {
-  return acwNext(state.dealer);
+function nextDealerAndCaller(state) {
+  const winningTeam = state.handWinner;
+  if (winningTeam === null) return { dealer: acwNext(state.dealer) };
+
+  // Determine who called last for the winning team
+  const lastCaller = state.lastCallerByTeam[winningTeam];
+  let nextCaller;
+  if (lastCaller === null || lastCaller === undefined) {
+    nextCaller = winningTeam === 0 ? 0 : 1;
+  } else {
+    // Alternate partner
+    nextCaller = (lastCaller + 2) % 4;
+  }
+
+  // Caller is right of dealer -> dealer is (caller + 1) % 4 (clockwise next)
+  const nextDealerPos = (nextCaller + 1) % 4;
+  return { dealer: nextDealerPos, caller: nextCaller };
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
@@ -540,10 +600,11 @@ module.exports = {
   createHandState,
   declareTrump,
   playCard,
+  clearTrick,
   getCurrentPlayer,
   isLegalPlay,
   getPublicState,
-  nextDealer,
+  nextDealerAndCaller,
   getTeam,
   acwNext,
   SUITS,
